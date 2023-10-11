@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getMessaging } from "firebase/messaging";
 import Messages from "./Messages";
 import { Box, Button, Typography } from "@mui/material";
+import axios from "axios"
 
 const ChatPage = () => {
   const { roomId } = useParams();
@@ -67,6 +68,7 @@ const ChatPage = () => {
 
       await Promise.all(
         tokens.map(async (token) => {
+          console.log(token, "token");
           await getMessaging().send(token, payload);
           await toast.success(
             `${payload.notification.title}: ${payload?.notification?.body}`,
@@ -84,54 +86,82 @@ const ChatPage = () => {
     }
   };
   const handleInviteAll = async () => {
-    try {
-      const usersCollection = firestore.collection("rooms");
-      const userDocs = await usersCollection.get();
+    Notfication()
+    // try {
+    //   const usersCollection = firestore.collection("rooms");
+    //   const userDocs = await usersCollection.get();
+    //   // These registration tokens come from the client FCM SDKs.
+    //   // const registrationTokens = [
+    //   //   "YOUR_REGISTRATION_TOKEN_1",
+    //   //   // ...
+    //   //   "YOUR_REGISTRATION_TOKEN_n",
+    //   // ];
+    //   const registrationTokens = [];
 
-      onMessageListener().then((payload) => {
-        console.log(payload.notification, "onMessageListenerpayload");
-        setNotification({
-          title: payload?.notification?.title,
-          body: payload?.notification?.body,
-        });
-        // Fetch the FCM tokens of all users from Firestore
+    //   // Extract the FCM tokens from user documents
+    //   userDocs.forEach((doc) => {
+    //     const userData = doc.data();
+    //     if (userData.FCMToken) {
+    //       registrationTokens.push(userData.FCMToken);
+    //     }
+    //   });
+    //   const message = {
+    //     data: {title:"helo", body:"invited"},
+    //     tokens: registrationTokens,
+    //   };
+      
+    //   getMessaging().sendMulticast(message)
+    //     .then((response) => {
+    //       console.log(response + ' messages were sent successfully');
+    //     });
+  
+    //   // Define the notification message
+    
 
-        const userTokens = [];
+    //   onMessageListener().then((payload) => {
+    //     console.log(payload.notification, "onMessageListenerpayload");
+    //     setNotification({
+    //       title: payload?.notification?.title,
+    //       body: payload?.notification?.body,
+    //     });
+    //     // Fetch the FCM tokens of all users from Firestore
 
-        // Extract the FCM tokens from user documents
-        userDocs.forEach((doc) => {
-          const userData = doc.data();
-          if (userData.FCMToken) {
-            userTokens.push(userData.FCMToken);
-            console.log(userTokens, "userTokens");
-          }
-        });
+    //     const userTokens = [];
 
-        toast.success(
-          `${payload?.notification?.title}: ${payload?.notification?.body}`,
-          {
-            duration: 60000,
-            position: "top-right",
-          }
-        );
-        console.log(
-          `${payload?.notification?.title}: ${payload?.notification?.body}`
-        );
-      });
-      // Send the invitation message to all users
-      // await sendPushNotification(
-      //   userTokens,
-      //   "You are invited to join a group!"
-      // );
+    //     // Extract the FCM tokens from user documents
+    //     userDocs.forEach((doc) => {
+    //       const userData = doc.data();
+    //       if (userData.FCMToken) {
+    //         userTokens.push(userData.FCMToken);
+    //         console.log(userTokens, "userTokens");
+    //       }
+    //     });
 
-      console.log("Invitations sent successfully.");
-    } catch (error) {
-      console.error("Error inviting all users:", error);
-    }
+    //     toast.success(
+    //       `${payload?.notification?.title}: ${payload?.notification?.body}`,
+    //       {
+    //         duration: 60000,
+    //         position: "top-right",
+    //       }
+    //     );
+    //     console.log(
+    //       `${payload?.notification?.title}: ${payload?.notification?.body}`
+    //     );
+    //   });
+    //   // Send the invitation message to all users
+    //   // await sendPushNotification(
+    //   //   userTokens,
+    //   //   "You are invited to join a group!"
+    //   // );
+
+    //   console.log("Invitations sent successfully.");
+    // } catch (error) {
+    //   console.error("Error inviting all users:", error);
+    // }
   };
 
   useEffect(() => {
-    // requestPermission();
+    requestPermission();
     const unsubscribe = onMessageListener().then((payload) => {
       console.log(payload.notification, "onMessageListenerpayload");
       setNotification({
@@ -154,6 +184,46 @@ const ChatPage = () => {
     };
   }, []);
 
+  const Notfication=async()=>{
+    const usersCollection = firestore.collection("rooms");
+    const userDocs = await usersCollection.get();
+    const notificationData = {
+      title: 'Notification Title',
+      body: 'Notification Body',
+    };
+    const registrationTokens = [];
+
+    // Extract the FCM tokens from user documents
+    userDocs.forEach((doc) => {
+      const userData = doc.data();
+      if (userData.FCMToken) {
+        registrationTokens.push(userData.FCMToken);
+      }
+    });
+  axios.post('https://pushnotification-wrwj.onrender.com', {
+    registrationTokens,
+    notification: notificationData,
+    msg:"helooooooo"
+  })
+  .then((response) => {
+    console.log('Push notification sent:', response.data);
+    if(response.status === 200){
+      toast.success(
+        `${response.data.message}`,
+        {
+          duration: 60000,
+          position: "top-right",
+        }
+      );
+    }
+  })
+  .catch((error) => {
+    console.error('Error sending push notification:', error);
+  });
+
+  }
+
+
   return (
     <>
       <Box
@@ -162,7 +232,7 @@ const ChatPage = () => {
           justifyContent: "center",
           alignItems: "center",
           my: 2,
-          flexDirection:'column'
+          flexDirection: "column",
         }}
       >
         <Typography variant="h4">Chat App</Typography>
