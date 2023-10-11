@@ -200,7 +200,7 @@ const ChatPage = () => {
         registrationTokens.push(userData.FCMToken);
       }
     });
-  axios.post('https://pushnotification-wrwj.onrender.com//send-notification', {
+  axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
     registrationTokens,
     notification: notificationData,
   })
