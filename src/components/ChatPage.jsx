@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getMessaging } from "firebase/messaging";
 import Messages from "./Messages";
 import { Box, Button, Typography } from "@mui/material";
-import axios from "axios";
+import axios from "axios"
 
 const ChatPage = () => {
   const { roomId } = useParams();
@@ -86,7 +86,7 @@ const ChatPage = () => {
     }
   };
   const handleInviteAll = async () => {
-    Notfication();
+    Notfication()
     // try {
     //   const usersCollection = firestore.collection("rooms");
     //   const userDocs = await usersCollection.get();
@@ -109,13 +109,14 @@ const ChatPage = () => {
     //     data: {title:"helo", body:"invited"},
     //     tokens: registrationTokens,
     //   };
-
+      
     //   getMessaging().sendMulticast(message)
     //     .then((response) => {
     //       console.log(response + ' messages were sent successfully');
     //     });
-
+  
     //   // Define the notification message
+    
 
     //   onMessageListener().then((payload) => {
     //     console.log(payload.notification, "onMessageListenerpayload");
@@ -183,10 +184,10 @@ const ChatPage = () => {
     };
   }, []);
 
-  const Notfication = async () => {
+  const Notfication=async()=>{
     const usersCollection = firestore.collection("rooms");
     const userDocs = await usersCollection.get();
-    const notificationData = "you are invited to group";
+    const notificationData = "you are invited to group"
     const registrationTokens = [];
 
     // Extract the FCM tokens from user documents
@@ -196,24 +197,28 @@ const ChatPage = () => {
         registrationTokens.push(userData.FCMToken);
       }
     });
-    axios
-      .post(
-        "https://pushnotification-wrwj.onrender.com/send-notification",
-        notificationData
-      )
-      .then((response) => {
-        console.log("Push notification sent:", response.data);
-        if (response.status === 200) {
-          toast.success(`${response.data.message}`, {
-            duration: 60000,
-            position: "top-right",
-          });
+  axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
+    registrationTokens,
+    notification: notificationData,
+  })
+  .then((response) => {
+    console.log('Push notification sent:', response.data);
+    if(response.status === 200){
+      toast.success(
+        `${response.data.message}`,
+        {
+          duration: 60000,
+          position: "top-right",
         }
-      })
-      .catch((error) => {
-        console.error("Error sending push notification:", error);
-      });
-  };
+      );
+    }
+  })
+  .catch((error) => {
+    console.error('Error sending push notification:', error);
+  });
+
+  }
+
 
   return (
     <>
