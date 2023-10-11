@@ -200,10 +200,9 @@ const ChatPage = () => {
         registrationTokens.push(userData.FCMToken);
       }
     });
-  axios.post('https://pushnotification-wrwj.onrender.com', {
+  axios.post('https://pushnotification-wrwj.onrender.com//send-notification', {
     registrationTokens,
     notification: notificationData,
-    msg:"helooooooo"
   })
   .then((response) => {
     console.log('Push notification sent:', response.data);
