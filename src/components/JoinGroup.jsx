@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { firestore, messaging } from "../firebase/Firebase";
+import { firestore, messaging, requestPermission } from "../firebase/Firebase";
 import { useNavigate } from "react-router-dom";
 import { getToken } from "firebase/messaging";
 import Avatar from '@mui/material/Avatar';
@@ -75,6 +75,7 @@ export default function JoinGroup() {
   };
 
   useEffect(() => {
+    requestPermission()
     getToken(messaging, { vapidKey: `BOd5UVNfTVm0IglKifUK1IzxkfR31r9-9aHDSDoT47KqaTqs6XdD9SxCt5iIA40QcM-ACodGDpu4Li_Gc64RJT0` })
    .then((currentToken) => {
  

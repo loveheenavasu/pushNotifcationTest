@@ -163,7 +163,7 @@ const ChatPage = () => {
   useEffect(() => {
     requestPermission();
     const unsubscribe = onMessageListener().then((payload) => {
-      console.log(payload.notification, "onMessageListenerpayload");
+      console.log(payload, "onMessageListenerpayload");
       setNotification({
         title: payload?.notification?.title,
         body: payload?.notification?.body,
@@ -187,7 +187,12 @@ const ChatPage = () => {
   const Notfication=async()=>{
     const usersCollection = firestore.collection("rooms");
     const userDocs = await usersCollection.get();
-    const notificationData = "you are invited to group"
+    // const notificationData = {
+    //   title:"Notifcation",
+    //   body:'You are invited to Group'
+    // }
+   const  notification={title: 'Notifcation', body: 'You are invited to Group'}
+    
     const registrationTokens = [];
 
     // Extract the FCM tokens from user documents
@@ -199,7 +204,7 @@ const ChatPage = () => {
     });
   axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
     registrationTokens,
-    notification: notificationData,
+    notification: notification,
   })
   .then((response) => {
     console.log('Push notification sent:', response.data);
@@ -211,6 +216,24 @@ const ChatPage = () => {
           position: "top-right",
         }
       );
+      onMessageListener().then((payload) => {
+        console.log(payload, "onMessageListenerpayload");
+        setNotification({
+          title: payload?.notification?.title,
+          body: payload?.notification?.body,
+        });
+        toast.success(
+          `${payload?.notification?.title}: ${payload?.notification?.body}`,
+          {
+            duration: 60000,
+            position: "top-right",
+          }
+        );
+        console.log(
+          `${payload?.notification?.title}: ${payload?.notification?.body}`
+        );
+      });
+   
     }
   })
   .catch((error) => {
