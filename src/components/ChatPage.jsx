@@ -192,6 +192,8 @@ const ChatPage = () => {
     //   body:'You are invited to Group'
     // }
    const  notification={title: 'Notifcation', body: 'You are invited to Group'}
+   const  data={title: 'Notifcation', body: 'You are invited to Group'}
+
     
     const registrationTokens = [];
 
@@ -205,6 +207,7 @@ const ChatPage = () => {
   axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
     registrationTokens,
     notification: notification,
+    data:data
   })
   .then((response) => {
     console.log('Push notification sent:', response.data);
