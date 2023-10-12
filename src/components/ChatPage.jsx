@@ -17,6 +17,7 @@ const ChatPage = () => {
   const { roomId } = useParams();
   const [userData, setUserData] = useState(null);
   const [notification, setNotification] = useState({ title: "", body: "" });
+  console.log(userData,"userData");
 
   console.log(roomId, "id");
   useEffect(() => {
@@ -207,7 +208,8 @@ const ChatPage = () => {
   axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
     registrationTokens,
     notification: notification,
-    data:data
+    data:data,
+    tokenToExclude:userData?.FCMToken
   })
   .then((response) => {
     console.log('Push notification sent:', response.data);
