@@ -140,7 +140,7 @@ const ChatPage = ({socket}) => {
       }
     });
     axios
-      .post("http://localhost:3000/send-notification", {
+      .post("https://piemultilingualbackend.onrender.com/send-notification", {
         registrationTokens,
         notification: notification,
         data: data,
