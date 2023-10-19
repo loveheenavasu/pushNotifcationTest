@@ -11,13 +11,16 @@ import "react-toastify/dist/ReactToastify.css";
 import { getMessaging } from "firebase/messaging";
 import Messages from "./Messages";
 import { Box, Button, Typography } from "@mui/material";
-import axios from "axios"
+import axios from "axios";
+import AudioChat from "./Audio";
+import Navbar from "./Navbar";
 
-const ChatPage = () => {
+const ChatPage = ({socket}) => {
   const { roomId } = useParams();
   const [userData, setUserData] = useState(null);
   const [notification, setNotification] = useState({ title: "", body: "" });
-  console.log(userData,"userData");
+  const [role, setRole] = useState("");
+  console.log(userData, "userData");
 
   console.log(roomId, "id");
   useEffect(() => {
@@ -87,78 +90,7 @@ const ChatPage = () => {
     }
   };
   const handleInviteAll = async () => {
-    Notfication()
-    // try {
-    //   const usersCollection = firestore.collection("rooms");
-    //   const userDocs = await usersCollection.get();
-    //   // These registration tokens come from the client FCM SDKs.
-    //   // const registrationTokens = [
-    //   //   "YOUR_REGISTRATION_TOKEN_1",
-    //   //   // ...
-    //   //   "YOUR_REGISTRATION_TOKEN_n",
-    //   // ];
-    //   const registrationTokens = [];
-
-    //   // Extract the FCM tokens from user documents
-    //   userDocs.forEach((doc) => {
-    //     const userData = doc.data();
-    //     if (userData.FCMToken) {
-    //       registrationTokens.push(userData.FCMToken);
-    //     }
-    //   });
-    //   const message = {
-    //     data: {title:"helo", body:"invited"},
-    //     tokens: registrationTokens,
-    //   };
-      
-    //   getMessaging().sendMulticast(message)
-    //     .then((response) => {
-    //       console.log(response + ' messages were sent successfully');
-    //     });
-  
-    //   // Define the notification message
-    
-
-    //   onMessageListener().then((payload) => {
-    //     console.log(payload.notification, "onMessageListenerpayload");
-    //     setNotification({
-    //       title: payload?.notification?.title,
-    //       body: payload?.notification?.body,
-    //     });
-    //     // Fetch the FCM tokens of all users from Firestore
-
-    //     const userTokens = [];
-
-    //     // Extract the FCM tokens from user documents
-    //     userDocs.forEach((doc) => {
-    //       const userData = doc.data();
-    //       if (userData.FCMToken) {
-    //         userTokens.push(userData.FCMToken);
-    //         console.log(userTokens, "userTokens");
-    //       }
-    //     });
-
-    //     toast.success(
-    //       `${payload?.notification?.title}: ${payload?.notification?.body}`,
-    //       {
-    //         duration: 60000,
-    //         position: "top-right",
-    //       }
-    //     );
-    //     console.log(
-    //       `${payload?.notification?.title}: ${payload?.notification?.body}`
-    //     );
-    //   });
-    //   // Send the invitation message to all users
-    //   // await sendPushNotification(
-    //   //   userTokens,
-    //   //   "You are invited to join a group!"
-    //   // );
-
-    //   console.log("Invitations sent successfully.");
-    // } catch (error) {
-    //   console.error("Error inviting all users:", error);
-    // }
+    Notfication();
   };
 
   useEffect(() => {
@@ -185,17 +117,19 @@ const ChatPage = () => {
     };
   }, []);
 
-  const Notfication=async()=>{
+  const Notfication = async () => {
     const usersCollection = firestore.collection("rooms");
     const userDocs = await usersCollection.get();
     // const notificationData = {
     //   title:"Notifcation",
     //   body:'You are invited to Group'
     // }
-   const  notification={title: 'Notifcation', body: 'You are invited to Group'}
-   const  data={title: 'Notifcation', body: 'You are invited to Group'}
+    const notification = {
+      title: "Notifcation",
+      body: "You are invited to Group",
+    };
+    const data = { title: "Notifcation", body: "You are invited to Group" };
 
-    
     const registrationTokens = [];
 
     // Extract the FCM tokens from user documents
@@ -205,80 +139,49 @@ const ChatPage = () => {
         registrationTokens.push(userData.FCMToken);
       }
     });
-  axios.post('https://pushnotification-wrwj.onrender.com/send-notification', {
-    registrationTokens,
-    notification: notification,
-    data:data,
-    tokenToExclude:userData?.FCMToken
-  })
-  .then((response) => {
-    console.log('Push notification sent:', response.data);
-    if(response.status === 200){
-      toast.success(
-        `${response.data.message}`,
-        {
-          duration: 60000,
-          position: "top-right",
-        }
-      );
-      onMessageListener().then((payload) => {
-        console.log(payload, "onMessageListenerpayload");
-        setNotification({
-          title: payload?.notification?.title,
-          body: payload?.notification?.body,
-        });
-        toast.success(
-          `${payload?.notification?.title}: ${payload?.notification?.body}`,
-          {
+    axios
+      .post("http://localhost:3000/send-notification", {
+        registrationTokens,
+        notification: notification,
+        data: data,
+        tokenToExclude: userData?.FCMToken,
+      })
+      .then((response) => {
+        console.log("Push notification sent:", response.data);
+        if (response.status === 200) {
+          toast.success(`${response.data.message}`, {
             duration: 60000,
             position: "top-right",
-          }
-        );
-        console.log(
-          `${payload?.notification?.title}: ${payload?.notification?.body}`
-        );
+          });
+          onMessageListener().then((payload) => {
+            console.log(payload, "onMessageListenerpayload");
+            setNotification({
+              title: payload?.notification?.title,
+              body: payload?.notification?.body,
+            });
+            toast.success(
+              `${payload?.notification?.title}: ${payload?.notification?.body}`,
+              {
+                duration: 60000,
+                position: "top-right",
+              }
+            );
+            console.log(
+              `${payload?.notification?.title}: ${payload?.notification?.body}`
+            );
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error sending push notification:", error);
       });
-   
-    }
-  })
-  .catch((error) => {
-    console.error('Error sending push notification:', error);
-  });
+  };
 
-  }
-
-
+  console.log(role, "role");
   return (
     <>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          my: 2,
-          flexDirection: "column",
-        }}
-      >
-        <Typography variant="h4">Chat App</Typography>
-        {userData ? (
-          <div>
-            {/* <h3>Room Name: {userData.name}</h3> */}
-            <Button
-              onClick={() => handleInviteAll()}
-              variant="contained"
-              sx={{ my: 2 }}
-            >
-              {" "}
-              Inivte All
-            </Button>
-            {/* Display other room data here */}
-          </div>
-        ) : (
-          <p>Loading room data...</p>
-        )}
-        <ToastContainer autoClose={4000} />
-      </Box>
-      <Messages userData={userData} />
+    <Navbar userData={userData} handleInviteAll={handleInviteAll} />
+    <Messages userData={userData} />
     </>
   );
 };
