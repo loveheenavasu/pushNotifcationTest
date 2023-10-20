@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   getFirestore,
   collection,
@@ -11,7 +11,8 @@ import {
 } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { app } from "../firebase/Firebase";
-
+import EmojiPicker from "emoji-picker-react";
+import ".././style.css";
 import {
   Avatar,
   Box,
@@ -28,6 +29,8 @@ import {
   Typography,
 } from "@mui/material";
 import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import Audio from "./Audio";
+import TagFacesIcon from "@mui/icons-material/TagFaces";
 
 const db = getFirestore(app);
 
@@ -35,11 +38,38 @@ const Messages = ({ userData }) => {
   const [users, setUsers] = useState([]);
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
-  
+  const [isEmojiPicker, setIsEmojiPicker] = useState(false);
+
+  const handleEmojiPicker = () => {
+    setIsEmojiPicker(!isEmojiPicker);
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isEmojiPicker]);
+
+  const handleClickOutside = (event) => {
+    const emojiPickerElement = document.querySelector(".emoji-picker");
+    if (emojiPickerElement && !emojiPickerElement.contains(event.target)) {
+      setIsEmojiPicker(false);
+    }
+  };
+  const mostRecentMessageRef = useRef(null);
+
+  const handleEmojiClick = (emoji) => {
+    const emojiValue = emoji.emoji; // Get the emoji value
+
+    // Append the emoji to the current message text
+    setCurrentMessage((prevMessage) => prevMessage + emojiValue);
+  };
   // CSS styles applied directly to components
   const chatSectionStyle = {
     width: "100%",
-    height: "66vh",
+    height: "85vh",
   };
 
   const usersListStyle = {
@@ -48,8 +78,10 @@ const Messages = ({ userData }) => {
   };
 
   const messageAreaStyle = {
-    height: "55vh",
+    height: "65vh",
     overflowY: "auto",
+    paddingBottom: "80px",
+    // background:"red"
   };
 
   useEffect(() => {
@@ -71,12 +103,24 @@ const Messages = ({ userData }) => {
     const messageCollection = collection(db, "messages");
     const newMessage = {
       text: currentMessage,
-      senderId: userData?.id, // Replace with the sender's ID
+      senderId: userData?.id,
       timestamp: serverTimestamp(),
       name: userData?.name,
     };
 
-    await addDoc(messageCollection, newMessage);
+    // await addDoc(messageCollection, newMessage);
+    await addDoc(messageCollection, newMessage)
+      .then(() => {
+        // Scroll to the most recent message
+        if (mostRecentMessageRef.current) {
+          mostRecentMessageRef.current.scrollIntoView({
+            behavior: "smooth",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error adding message: ", error);
+      });
     setCurrentMessage("");
   };
 
@@ -94,7 +138,7 @@ const Messages = ({ userData }) => {
       unsubscribe();
     };
   }, []);
-  
+
   const isCurrentUser = (message) => {
     return message.senderId === userData?.id;
   };
@@ -109,16 +153,15 @@ const Messages = ({ userData }) => {
     const formattedMinutes = minutes.toString().padStart(2, "0");
     return `${formattedHours}:${formattedMinutes} ${ampm}`;
   }
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Prevents line breaks when Shift+Enter is pressed
+      sendMessage(); // Call the sendMessage function when Enter is pressed
+    }
+  };
 
   return (
     <div>
-      <Grid container>
-        <Grid item xs={12}>
-          {/* <Typography variant="h5" className="header-message">
-            Chat
-          </Typography> */}
-        </Grid>
-      </Grid>
       <Grid container component={Paper} style={chatSectionStyle}>
         <Grid item xs={3} style={{ borderRight: "1px solid #e0e0e0" }}>
           <List>
@@ -160,28 +203,79 @@ const Messages = ({ userData }) => {
             ))}
           </List>
         </Grid>
-        <Grid item xs={9}>
+        <Grid
+          item
+          xs={9}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            textAlign: "center",
+            backgroundImage: "url(/images/bg1.jpeg)",
+            position: "relative",
+          }}
+        >
           <List style={messageAreaStyle}>
             {messages?.map((message, index) => (
-              <ListItem key={index}>
-                <Grid container>
+              <ListItem
+                key={index}
+                style={{
+                  display: "flex",
+                  justifyContent: isCurrentUser(message)
+                    ? "flex-end"
+                    : "flex-start",
+                }}
+                ref={(element) =>
+                  // Assign a ref to the most recent message
+                  index === messages.length - 1 && (mostRecentMessageRef.current = element)
+                }
+              >
+                <Grid
+                  container
+                  sx={{
+                    width: "50%",
+                    background: isCurrentUser(message)
+                      ? "rgb(220 249 198)"
+                      : "#fff",
+                    borderRadius: isCurrentUser(message)
+                      ? "16px 0px 16px 16px"
+                      : "0px 16px 16px 16px",
+                    padding: "3px 20px",
+                  }}
+                >
                   <Grid item xs={12}>
                     <ListItemText
                       align={isCurrentUser(message) ? "right" : "left"}
                       primary={message.text}
+                      className={
+                        isCurrentUser(message)
+                          ? "userMessageClass"
+                          : "otherUserMessageClass"
+                      }
                     >
-                      {message.text}
+                      <div class="talk-bubble tri-right round border right-top">
+                        <div class="talktext">
+                          <p>{message.text}</p>
+                        </div>
+                      </div>
                     </ListItemText>
                   </Grid>
                   <Grid
                     item
                     xs={12}
-                    style={{ textAlign: isCurrentUser(message) ? "right" : "left" }}
+                    style={{
+                      textAlign: isCurrentUser(message) ? "right" : "left",
+                    }}
                   >
-                    <span style={{ fontSize: "10px", marginRight: "10px" }}>
+                    <span
+                      style={{
+                        fontSize: "9px",
+                        marginRight: "10px",
+                        color: "gray",
+                      }}
+                    >
                       {formatFirestoreTimestamp(message.timestamp)}
                     </span>
-                    <span style={{ fontSize: "12px" }}>
+                    <span style={{ fontSize: "9px", color: "gray" }}>
                       {isCurrentUser(message) ? "you" : message.name}
                     </span>
                   </Grid>
@@ -189,9 +283,55 @@ const Messages = ({ userData }) => {
               </ListItem>
             ))}
           </List>
-          <Grid container style={{ padding: "20px", marginTop: "50px" }}>
-            <Grid item xs={11}>
-              <TextField
+
+          <Grid
+            container
+            style={{
+              paddingTop: "20px",
+              paddingBottom: "20px",
+              marginTop: "0px",
+              background: "rgb(240 240 240)",
+              position: "absolute",
+              bottom: 0,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <Grid xs={1.1}>
+              <Button variant="text" onClick={handleEmojiPicker}>
+                <TagFacesIcon style={{ color: "rgb(64 151 137)" }} />
+              </Button>
+              {isEmojiPicker && (
+                <Box
+                  className="emoji-picker"
+                  sx={{
+                    display: "flex",
+                    width: "400px",
+                    height: "460px",
+                    position: "absolute",
+                    zIndex: 9999,
+                    bottom: "64px",
+                  }}
+                >
+                  <EmojiPicker
+                    onEmojiClick={(emoji) => handleEmojiClick(emoji)}
+                  />
+                </Box>
+              )}
+            </Grid>
+
+            <Grid
+              item
+              xs={9.5}
+              sx={{ display: "flex", justifyContent: "center" }}
+            >
+              <input
+                style={{
+                  width: "100%",
+                  border: "none",
+                  padding: "15px",
+                  borderRadius: "65px",
+                }}
                 id="outlined-basic-email"
                 label="Type Something"
                 fullWidth
@@ -199,7 +339,7 @@ const Messages = ({ userData }) => {
                 onChange={(e) => setCurrentMessage(e.target.value)}
               />
             </Grid>
-            <Grid xs={1} align="right">
+            <Grid xs={1.1} align="right">
               <Button
                 onClick={sendMessage}
                 variant="contained"
@@ -208,8 +348,12 @@ const Messages = ({ userData }) => {
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  height: "50px",
+                  // height: "50px",
+                  background: "rgb(64 151 137)",
+                  padding: "14px 18px",
                 }}
+                onKeyDown={(e)=>console.log(e.target)} 
+                size="small"
               >
                 <SendRoundedIcon />
               </Button>

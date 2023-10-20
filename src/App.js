@@ -4,7 +4,8 @@ import ChatPage from './components/ChatPage';
 import JoinGroup from './components/JoinGroup';
 import io from "socket.io-client"
 
-const socket = io.connect('http://localhost:3001'); // Add this -- our server will run on port 4000, so we connect to it from here
+// const socket = io.connect('http://localhost:3001'); // Add this -- our server will run on port 4000, so we connect to it from here
+const socket = io.connect('https://pushnotification-wrwj.onrender.com')
   
 
 const App = () => {
